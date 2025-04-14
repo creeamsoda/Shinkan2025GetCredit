@@ -42,6 +42,7 @@ export function Draw(Score, IsPlayerExtendingHand, CreditsList) {
 
     // 単位の描画
     DrawCredits(CreditsList);
+    //Debug.DrawCreditSize(ctx);
 
     // 教授の手の描画
     ctx.drawImage(imageProfesserHand,0,0);
@@ -84,7 +85,7 @@ function DrawCredits(CreditsList){
     for (let i=0; i<CreditsList.length; i++){
         if (CreditsList[i].IsShowing() == true){
             ctx.fillStyle = "green";
-            ctx.fillRect(CreditsList[i].Position.x, CreditsList[i].Position.y, 40, 10);
+            ctx.fillRect(CreditsList[i].Position.x, CreditsList[i].Position.y, GameConst.CreditSize.x, GameConst.CreditSize.y);
             ctx.fillStyle = "black";
             ctx.fillText(CreditsList[i].Name, CreditsList[i].Position.x, CreditsList[i].Position.y);
         }

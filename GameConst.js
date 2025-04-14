@@ -3,8 +3,9 @@ import { Vector2 } from "./Common.js";
 // JavaScript source code
 export const PlayerPosition = new Vector2(0, 0);
 
-export const CreditStartPosition = new Vector2(360, 10);
+export const CreditStartPosition = new Vector2(520, 85);
 export const CreditStartVelocity = new Vector2(0, 0);
+export const CreditSize = new Vector2(250,50);
 
 export const GravityAcceleration = new Vector2(0, 98);
 

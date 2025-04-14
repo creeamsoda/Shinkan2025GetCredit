@@ -24,3 +24,10 @@ export function DrawTimeUntilReachLine(ctx, time){
     ctx.fillText("TimeUntilReachLine:"+String(time), 400, 100);
     ctx.closePath();
 }
+
+export function DrawCreditSize(ctx){
+    ctx.beginPath();
+    ctx.fillStyle = "blue";
+    ctx.fillRect(GameConst.CreditStartPosition.x, GameConst.CreditStartPosition.y, GameConst.CreditSize.x, GameConst.CreditSize.y)
+    ctx.closePath();
+}
