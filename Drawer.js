@@ -2,12 +2,21 @@
 
 import * as GameConst from "./GameConst.js";
 import * as UiConst from "./UiConst.js";
+import { DelaySeconds } from "./Common.js";
+import { GetCreditResult } from "./GetCreditResult.js";
 import * as Debug from "./DebugDraw.js";
 
 // 変数の宣言
 let canvas;
 /** @type {HTMLCanvasElement} */
 let ctx;
+
+// 一時的に画面に表示するものを描画する関数を入れる動的なリスト
+let drawUiCallback;
+// 「得単」か「落単」の文字を一定時間描画するタスク
+let drawGetCreditResultTextTask;
+let drawScoreIncreaseTextTask;
+
 
 // 画像
 let imageBed;
@@ -21,10 +30,15 @@ let imageProfesserHand;
 export function InitDrawer() {
     canvas = document.getElementById('myCanvas');
     ctx = canvas.getContext('2d');
+    drawGetCreditResultTextTask = [];
+    drawScoreIncreaseTextTask = [];
+    drawUiCallback = [drawGetCreditResultTextTask, drawScoreIncreaseTextTask];
 
     // 画像の読み込み
     LoadImages();
 }
+
+
 
 export function Draw(Score, IsPlayerExtendingHand, CreditsList) {
     ctx.beginPath();
@@ -93,9 +107,49 @@ function DrawCredits(CreditsList){
     ctx.closePath();
 }
 
+export async function GenerateDrawGetCreditResultText(getResult, cancellationToken){
+    if(getResult == GetCreditResult.Get){
+        //drawUiCallback.push(DrawGetCreditText());
+        //drawUiCallback.push( function(){ FillUi(UiConst.GetCreditText,""); })
+        //drawGetCreditResultTextTask = function(){ FillUi(UiConst.GetCreditText, ""); };
+        ClearAndAddTask(drawGetCreditResultTextTask, function(){ FillUi(UiConst.GetCreditText,""); });
+        //drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length, function(){ FillUi(UiConst.GetCreditText, ""); });
+    }else{
+        //drawUiCallback.push( function(){ FillUi(UiConst.FailCreditText,""); });
+        //drawGetCreditResultTextTask = function(){ FillUi(UiConst.FailCreditText, ""); };
+        ClearAndAddTask(drawGetCreditResultTextTask, function(){ FillUi(UiConst.FailCreditText,""); });
+        //drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length, function(){ FillUi(UiConst.FailCreditText, ""); });
+    }
+    // await DelaySeconds(1).then(function(){ drawUiCallback.shift()});
+    await DelaySeconds(8, cancellationToken).then( function(){ drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length); });
+    console.log("Self Cancel");
+}
+
+export async function GenerateScoreIncreaseText (scoreIncrease, cancellationToken) {
+    if(scoreIncrease > 0){
+        ClearAndAddTask(drawScoreIncreaseTextTask, function(){ FillUi(UiConst.ScoreIncreaseText, scoreIncrease); });
+    }else{
+        ClearAndAddTask(drawScoreIncreaseTextTask, function(){ FillUi(UiConst.ScoreDecreaseText, scoreIncrease); });
+    }
+
+    await DelaySeconds(8, cancellationToken).then( function(){ ClearAndAddTask(drawScoreIncreaseTextTask); });
+}
+
 function DrawUi(Score){
     FillUi(UiConst.ScoreText, "");
     FillUi(UiConst.ScoreNumber, Score);
+    for(let i=0; i<drawUiCallback.length; i++){
+        if (drawUiCallback[i] != null){
+            for (let j=0; j<drawUiCallback[i].length; j++){
+                if (drawUiCallback[i][j] != null){
+                    drawUiCallback[i][j]();
+                    console.log("callback is active");
+                }
+            }
+        }else{
+            console.log("callback is null");
+        }
+    }
 }
 
 function FillUi(Ui, additionalText){
@@ -106,6 +160,15 @@ function FillUi(Ui, additionalText){
     ctx.fillText(Ui.Text+additionalText, Ui.Position.x, Ui.Position.y);
     ctx.closePath();
 }
+
+function ClearAndAddTask(taskList, newTask = null){
+    if (newTask == null){
+        taskList.splice(0, taskList.length);
+    }else{
+        taskList.splice(0, taskList.length, newTask);
+    }
+}
+
 
 function LoadImages(){
     imageBed = new Image();

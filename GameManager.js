@@ -1,17 +1,23 @@
 // ゲームシステムの全てを司るモジュール
 
 import * as GameConst from "./GameConst.js";
+import { DelaySeconds } from "./Common.js";
 import { CreditState } from "./CreditState.js"
+import { GetCreditResult } from "./GetCreditResult.js";
 import { SpawnNextCredits } from "./ProfesserManager.js";
 import { IsRightPressed, IsRightPressedDown, UpdateInput } from "./InputChecker.js";
-import { TryPlayerMove, ResetPlayerMove, IsPlayerExtendingHand } from "./PlayerMover.js";
+import { TryPlayerExtendHand, SleepPlayer, IsPlayerExtendingHand } from "./PlayerMover.js";
 
 let passedSecondsAfterSpawnPreviousCredits;
-export let Score;
+export let Score = 0;
+let nextGetScore = 0;
+export let IsHitStoping = false;
+let getCreditResultInthisFrame = GetCreditResult.Stay;
 
 export function InitGameManager(){
     passedSecondsAfterSpawnPreviousCredits = 0;
     Score = 0;
+    IsHitStoping = false;
 }
 
 export function Update(deltaSeconds, CreditsList){
@@ -29,46 +35,51 @@ export function Update(deltaSeconds, CreditsList){
 
     // いずれかの単位が落下中なら
     for (let i=0; i<CreditsList.length; i++){
-        // 落下中(かつキャッチ可能位置以上にある)の単位のうち、一番インデックス（iの値）が小さいものについてスコアを判定する
-        if(CreditsList[i].State == CreditState.Falling && CreditsList[i].Position.y <= GameConst.BottomCatchableArea){
-            // 入力を動きに反映する。このフレームで手を伸ばしたのならisNowExtendHandにtrueが入り、以前のフレームですでに伸ばしていたり、今伸ばしていないのならfalseが入る
-            let isNowExtendHand = TryPlayerMove(IsRightPressedDown);
-
-            // 手を伸ばした瞬間にスコア決定
-            if(isNowExtendHand == true){
-                Score += CalculateScore(CreditsList[i]);
-            }
+        if(CreditsList[i].State == CreditState.FailAndFalling && CreditsList[i].y >= GameConst.WindowSize.y){
+            CreditsList[i].State = CreditState.End;
             break;
+        }
+        else if(CreditsList[i].State == CreditState.Falling){
+            if(CreditsList[i].Position.y >= GameConst.BottomCatchableArea){
+                CreditsList[i].State = CreditState.FailAndFalling;
+                getCreditResultInthisFrame = GetCreditResult.Fail;
+                break;
+            }else{
+                // 入力を動きに反映する。このフレームで手を伸ばしたのならisNowExtendHandにtrueが入り、以前のフレームですでに伸ばしていたり、今伸ばしていないのならfalseが入る
+                let isNowExtendHand = TryPlayerExtendHand(IsRightPressedDown);
+
+                // 手を伸ばした瞬間にスコアの上昇量が決定（実際にはキャッチした瞬間に足す）
+                if(isNowExtendHand == true){
+                    nextGetScore = CalculateScore(CreditsList[i]);
+                }
+                break;
+            }
         }
     }
 
 
 
     // 単位がキャッチできる位置に来ているか調べる
-    CheckAbleToCatch(CreditsList)
+    let CatchableCredit = CheckAbleToCatch(CreditsList);
+    if(CatchableCredit != null){
+        CatchCredit(CatchableCredit);
+    }
 }
 
 function CheckAbleToCatch(CreditsList){
     // 主人公が手を伸ばしていない状況ならキャッチできるわけがないのでここでチェック終了
     if (IsPlayerExtendingHand == false){
-        return;
+        return null;
     }
 
-    console.log("here");
     // ここからは単位一つ一つについて座標をチェックする
     for (let i=0; i<CreditsList.length; i++){
         if (CreditsList[i].State == CreditState.Falling){
             if(GameConst.UpperCatchableArea <= CreditsList[i].Position.y 
                 && CreditsList[i].Position.y <= GameConst.BottomCatchableArea)
             {
-                CreditsList[i].State = CreditState.CaughtByPlayer;
-                // 全部の単位止めてもいいかも
-
-                // FIXME 時間差設ける
-                CreditsList[i].State = CreditState.End;
-
-                //FIXME これは外に出す？
-                ResetPlayerMove();
+                return CreditsList[i];
+                
             }
         }
     }
@@ -102,6 +113,50 @@ function CalculateTimeUntilReachLine(Credit, Line){
 
 export function DebugScoreGet(){
     return Score;
+}
+
+async function CatchCredit(credit) {
+    // 単位をキャッチされている状態にする
+    Score += nextGetScore;
+    credit.State = CreditState.CaughtByPlayer;
+    getCreditResultInthisFrame = GetCreditResult.Get;
+
+    // この操作はキャンセルされないという意思
+    let cancellationToken = null;
+
+    // ヒットストップで全ての単位の落下、生成を一時停止する
+    await HitStop(0.8, cancellationToken);
+
+    // その単位を見えない状態にする
+    credit.State = CreditState.End;
+
+    // 主人公を寝ている状態に戻す
+    SleepPlayer();
+}
+
+// ヒットストップフラグを立て、一定秒数後にフラグを下げる
+async function HitStop(seconds, cancellationToken){
+    IsHitStoping = true;
+    await DelaySeconds(seconds, cancellationToken).then(function(){ IsHitStoping = false; });
+}
+
+// 一度読み込まれるまで結果を保持するゲッター
+export function CheckGetCreditResult(){
+    if (getCreditResultInthisFrame == GetCreditResult.Get){
+        getCreditResultInthisFrame = GetCreditResult.Stay;
+        let scoreIncrease = nextGetScore;
+        nextGetScore = 0;
+        return {result: GetCreditResult.Get, score: scoreIncrease};
+    }
+    else if (getCreditResultInthisFrame == GetCreditResult.Fail){
+        getCreditResultInthisFrame = GetCreditResult.Stay;
+        let scoreIncrease = nextGetScore;
+        nextGetScore = 0;
+        return {result: GetCreditResult.Fail, score: scoreIncrease};
+    }
+    
+    // getCreditResultInThisFrame == GetCreditResult.Stay
+    return {result: GetCreditResult.Stay, score: 0};
 }
 
 export function DebugTimeUntilReachLineGet(CreditsList){

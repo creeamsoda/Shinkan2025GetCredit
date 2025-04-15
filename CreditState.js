@@ -6,5 +6,6 @@ export const CreditState = Object.freeze({
     HeldByProfesser: 1,
     Falling: 2,
     CaughtByPlayer: 3,
-    End: 4,
+    FailAndFalling: 4,
+    End: 5,
 })

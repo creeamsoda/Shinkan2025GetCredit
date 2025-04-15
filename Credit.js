@@ -23,6 +23,12 @@ export class Credit{
     IsShowing(){
         return (this.State == CreditState.HeldByProfesser
             || this.State == CreditState.Falling
-            || this.State == CreditState.CaughtByPlayer)
+            || this.State == CreditState.CaughtByPlayer
+            || this.State == CreditState.FailAndFalling)
+    }
+
+    IsMoving(){
+        return (this.State == CreditState.Falling
+            || this.State == CreditState.FailAndFalling)
     }
 }

@@ -14,17 +14,17 @@ export class CreditManager{
         } 
     }
 
-    static MoveShowingCredits(deltaTime){
+    static MoveShowingCredits(deltaSeconds){
         for (let i=0; i<this.CreditsList.length; i++){
-            if (this.CreditsList[i].State == CreditState.Falling){
+            if (this.CreditsList[i].IsMoving() == true){
                 // 移動距離 = 速度*時間 + 加速度*0.5*時間*時間
                 this.CreditsList[i].Position = this.CreditsList[i].Position
-                    .add(this.CreditsList[i].Velocity.times(deltaTime))
-                    .add(GameConst.GravityAcceleration.times(0.5*deltaTime*deltaTime));
+                    .add(this.CreditsList[i].Velocity.times(deltaSeconds))
+                    .add(GameConst.GravityAcceleration.times(0.5*deltaSeconds*deltaSeconds));
                 
                 // 速度 = 速度 + 加速度*時間
                 this.CreditsList[i].Velocity = this.CreditsList[i].Velocity
-                    .add(GameConst.GravityAcceleration.times(deltaTime));
+                    .add(GameConst.GravityAcceleration.times(deltaSeconds));
             }
         }
     }

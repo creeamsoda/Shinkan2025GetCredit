@@ -4,7 +4,7 @@
 export let IsPlayerExtendingHand = false; // 手を伸ばしているか
 
 // ボタン入力に応じて主人公の手を伸ばす関数。手を伸ばせたらtrue、すでに伸ばしていたり、伸ばさなかったらfalseを返す
-export function TryPlayerMove(IsButtonPressedDown) {
+export function TryPlayerExtendHand(IsButtonPressedDown) {
     // ボタンが押されたのなら手を伸ばす
     if (IsButtonPressedDown == true) {
         IsPlayerExtendingHand = true;
@@ -15,6 +15,6 @@ export function TryPlayerMove(IsButtonPressedDown) {
 }
 
 // 主人公の手を引っ込める関数
-export function ResetPlayerMove(){
+export function SleepPlayer(){
     IsPlayerExtendingHand = false;
 }

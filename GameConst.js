@@ -1,6 +1,8 @@
 import { Vector2 } from "./Common.js";
 
 // JavaScript source code
+export const WindowSize = new Vector2(1280, 720);
+
 export const PlayerPosition = new Vector2(0, 0);
 
 export const CreditStartPosition = new Vector2(520, 85);

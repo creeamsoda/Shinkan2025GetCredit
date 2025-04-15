@@ -1,4 +1,6 @@
-// ベクトルなど便利計算を行うモジュール
+// ベクトルなど便利計算やディレイ処理を行うモジュール
+
+// ベクトルの定義
 // https://qiita.com/Nekonecode/items/523a9e7214082129935e
 // ↑このサイトを参考にしました
 export class Vector2{
@@ -28,4 +30,17 @@ export class Vector2{
     magnitude() {
         return Math.sqrt(this.x * this.x + this.y * this.y);
     }
+}
+
+
+// ディレイ処理
+// https://qiita.com/Hirohana/items/6a7fd4c7f4c9ccb1f6da
+// ↑このサイトを参考にしました
+export async function DelaySeconds(seconds, cancellationToken){
+    return new Promise(function(resolve, reject) {
+        setTimeout(resolve, seconds*1000);
+        if (cancellationToken){
+            cancellationToken.register(reject);
+        }
+    });
 }

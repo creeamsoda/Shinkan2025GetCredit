@@ -114,14 +114,18 @@
 
 //var interval = setInterval(draw, 10);
 
+import { GetCreditResult } from "./GetCreditResult.js";
 import { InitInputChecker } from "./InputChecker.js";
 import { IsPlayerExtendingHand } from "./PlayerMover.js";
 import { CreditManager } from "./CreditManager.js";
-import { InitGameManager, Update, Score, DebugScoreGet, DebugTimeUntilReachLineGet } from "./GameManager.js";
-import { InitDrawer, Draw, DebugDraw } from "./Drawer.js";
+import { InitGameManager, Update, CheckGetCreditResult, Score, IsHitStoping, DebugScoreGet, DebugTimeUntilReachLineGet } from "./GameManager.js";
+import { InitDrawer, Draw, GenerateDrawGetCreditResultText, GenerateScoreIncreaseText, DebugDraw } from "./Drawer.js";
+import { CancellationToken } from "./CancellationToken.js";
 
 // 前回のフレームがいつだったのかを表す時刻の値
 let previousFrameTimeStamp;
+
+let getCreditResultTextTask = null;
 
 // ゲームの初期化
 function GameInit() {
@@ -138,23 +142,48 @@ function GameInit() {
 
 // メインループ
 function GameRoop() {
-    
-    // 単位を下に向かって動かす
-    CreditManager.MoveShowingCredits(0.01);
+    // フレーム間の経過時間を計算する
+    let deltaSeconds = DeltaSeconds(IsHitStoping);
 
-    Update(DeltaSeconds(), CreditManager.CreditsList);
+    // 単位を下に向かって動かす
+    CreditManager.MoveShowingCredits(deltaSeconds);
+
+    Update(deltaSeconds, CreditManager.CreditsList);
+
+    // 落単か得単か調べる
+    let getResultAndScore = CheckGetCreditResult();
+    if (getResultAndScore.result != GetCreditResult.Stay){
+        CancelTask(getCreditResultTextTask);
+        getCreditResultTextTask = new CancellationToken();
+        GenerateDrawGetCreditResultText(getResultAndScore.result, getCreditResultTextTask);
+        GenerateScoreIncreaseText(getResultAndScore.score, getCreditResultTextTask);
+    }
 
     // 描画
     Draw(Score, IsPlayerExtendingHand, CreditManager.CreditsList);
     DebugDraw(DebugScoreGet(), DebugTimeUntilReachLineGet(CreditManager.CreditsList));
 }
 
-// 前のフレームからの経過時間(秒)を計算する
-function DeltaSeconds(){
+// 前のフレームからの経過時間(秒)を計算する。ヒットストップにも対応。
+function DeltaSeconds(isHitStoping){
+    //ヒットストップ中は経過秒数を0として返す
+    if (isHitStoping == true){
+        console.log("DeltaSeconds = 0");
+        return 0;
+    }
+
+    // ヒットストップ中でなければ普通に計算する
     let nowFrameTimeStamp = new Date().getTime();
     let deltaMilliSeconds = nowFrameTimeStamp - previousFrameTimeStamp;
     previousFrameTimeStamp = nowFrameTimeStamp;
+    //console.log("deltaSeconds = "+deltaMilliSeconds*0.001);
     return deltaMilliSeconds * 0.001;
+}
+
+function CancelTask(task){
+    if (task != null){
+        task.cancel();
+    }
 }
 
 GameInit();
