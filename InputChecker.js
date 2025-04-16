@@ -19,8 +19,8 @@ export function InitInputChecker() {
 
 // キーが押されたときに呼び出される関数
 function KeyDownHandler(e) {
-    // 押されたキーが右矢印キーのとき
-    if (e.key == "Right" || e.key == "ArrowRight") {
+    // 押されたキーがスペースキーのとき
+    if (e.key == " ") {
         IsRightPressed = true;
     }
     //else if (e.key == "Left" || e.key == "ArrowLeft") {
@@ -30,7 +30,7 @@ function KeyDownHandler(e) {
 
 // キーが押され終わったときに呼び出される関数
 function KeyUpHandler(e) {
-    if (e.key == "Right" || e.key == "ArrowRight") {
+    if (e.key == " ") {
         IsRightPressed = false;
     }
     //else if (e.key == "Left" || e.key == "ArrowLeft") {

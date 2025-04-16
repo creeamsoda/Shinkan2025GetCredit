@@ -2,7 +2,7 @@
 
 import * as GameConst from "./GameConst.js";
 import { Credit } from "./Credit.js";
-import { CreditState } from "./CreditState.js"
+
 
 export class CreditManager{
     static CreditsList = [];

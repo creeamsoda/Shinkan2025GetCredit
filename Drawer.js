@@ -5,11 +5,12 @@ import * as UiConst from "./UiConst.js";
 import { DelaySeconds } from "./Common.js";
 import { GetCreditResult } from "./GetCreditResult.js";
 import * as Debug from "./DebugDraw.js";
+import { PlayerState } from "./PlayerMover.js";
 
 // 変数の宣言
 let canvas;
 /** @type {HTMLCanvasElement} */
-let ctx;
+export let ctx;
 
 // 一時的に画面に表示するものを描画する関数を入れる動的なリスト
 let drawUiCallback;
@@ -40,8 +41,7 @@ export function InitDrawer() {
 
 
 
-export function Draw(Score, IsPlayerExtendingHand, CreditsList) {
-    ctx.beginPath();
+export function Draw(Score, NowPlayer, CreditsList) {
     // 画面を一旦クリアする
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -49,7 +49,7 @@ export function Draw(Score, IsPlayerExtendingHand, CreditsList) {
     ctx.drawImage(imageBed,0,0);
 
     // 主人公の描画
-    DrawPlayer(IsPlayerExtendingHand);
+    DrawPlayer(NowPlayer);
 
     // 教授の身体の描画
     ctx.drawImage(imageProfesserBody,0,0);
@@ -68,64 +68,52 @@ export function Draw(Score, IsPlayerExtendingHand, CreditsList) {
     ctx.arc(0, 0, 10, 0, Math.PI * 2);
     ctx.fillStyle = "#0095DD";
     ctx.fill();
-
-    
-    ctx.closePath();
 }
 
 export function DebugDraw(Score, TimeUntilReachLine){
-    ctx.beginPath();
     // ctx.drawImage(imagePlayerHappy,0,0);
 
     Debug.DrawCatchableArea(ctx);
     Debug.DrawScore(ctx, Score);
     Debug.DrawTimeUntilReachLine(ctx, TimeUntilReachLine);
-
-    ctx.closePath();
+    Debug.DrawResultText();
 }
 
-function DrawPlayer(IsPlayerExtendingHand) {
-    ctx.beginPath();
-    if (IsPlayerExtendingHand == true){
+function DrawPlayer(NowPlayer) {
+    if (NowPlayer == PlayerState.ExtendingHandHappy){
         ctx.drawImage(imagePlayerHappy, GameConst.PlayerPosition.x, GameConst.PlayerPosition.y);
+    }else if(NowPlayer == PlayerState.ExtendingHandSad){
+        ctx.drawImage(imagePlayerSad, GameConst.PlayerPosition.x, GameConst.PlayerPosition.y);
     }else{
         ctx.drawImage(imagePlayerSleep, GameConst.PlayerPosition.x, GameConst.PlayerPosition.y);
     }
-    ctx.closePath();
 }
 
 function DrawCredits(CreditsList){
-    ctx.beginPath();
     for (let i=0; i<CreditsList.length; i++){
         if (CreditsList[i].IsShowing() == true){
-            ctx.fillStyle = "green";
+            ctx.fillStyle = GameConst.CreditColor;
             ctx.fillRect(CreditsList[i].Position.x, CreditsList[i].Position.y, GameConst.CreditSize.x, GameConst.CreditSize.y);
-            ctx.fillStyle = "black";
-            ctx.fillText(CreditsList[i].Name, CreditsList[i].Position.x, CreditsList[i].Position.y);
+            ctx.fillStyle = UiConst.CreditNameText.Color;
+            ctx.font = UiConst.CreditNameText.TextSize+" "+UiConst.CreditNameText.Font;
+            ctx.textAlign = "center";
+            ctx.fillText(CreditsList[i].Name, CreditsList[i].Position.x+(GameConst.CreditSize.x/2), CreditsList[i].Position.y+(GameConst.CreditSize.y/2)+10);
+            ctx.textAlign = "start";
         }
     }
-    ctx.closePath();
 }
 
 export async function GenerateDrawGetCreditResultText(getResult, cancellationToken){
     if(getResult == GetCreditResult.Get){
-        //drawUiCallback.push(DrawGetCreditText());
-        //drawUiCallback.push( function(){ FillUi(UiConst.GetCreditText,""); })
-        //drawGetCreditResultTextTask = function(){ FillUi(UiConst.GetCreditText, ""); };
         ClearAndAddTask(drawGetCreditResultTextTask, function(){ FillUi(UiConst.GetCreditText,""); });
-        //drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length, function(){ FillUi(UiConst.GetCreditText, ""); });
     }else{
-        //drawUiCallback.push( function(){ FillUi(UiConst.FailCreditText,""); });
-        //drawGetCreditResultTextTask = function(){ FillUi(UiConst.FailCreditText, ""); };
         ClearAndAddTask(drawGetCreditResultTextTask, function(){ FillUi(UiConst.FailCreditText,""); });
-        //drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length, function(){ FillUi(UiConst.FailCreditText, ""); });
     }
-    // await DelaySeconds(1).then(function(){ drawUiCallback.shift()});
     await DelaySeconds(8, cancellationToken).then( function(){ drawGetCreditResultTextTask.splice(0, drawGetCreditResultTextTask.length); });
     console.log("Self Cancel");
 }
 
-export async function GenerateScoreIncreaseText (scoreIncrease, cancellationToken) {
+export async function GenerateScoreIncreaseText(scoreIncrease, cancellationToken) {
     if(scoreIncrease > 0){
         ClearAndAddTask(drawScoreIncreaseTextTask, function(){ FillUi(UiConst.ScoreIncreaseText, scoreIncrease); });
     }else{
@@ -152,13 +140,11 @@ function DrawUi(Score){
     }
 }
 
-function FillUi(Ui, additionalText){
-    ctx.beginPath();
+export function FillUi(Ui, additionalText = ""){
     ctx.fillStyle = Ui.Color;
     ctx.font = Ui.TextSize+" "+Ui.Font;
     // ctx.font = Ui.TextSize+" Arial";
     ctx.fillText(Ui.Text+additionalText, Ui.Position.x, Ui.Position.y);
-    ctx.closePath();
 }
 
 function ClearAndAddTask(taskList, newTask = null){

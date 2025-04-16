@@ -5,14 +5,16 @@ import { DelaySeconds } from "./Common.js";
 import { CreditState } from "./CreditState.js"
 import { GetCreditResult } from "./GetCreditResult.js";
 import { SpawnNextCredits } from "./ProfesserManager.js";
-import { IsRightPressed, IsRightPressedDown, UpdateInput } from "./InputChecker.js";
-import { TryPlayerExtendHand, SleepPlayer, IsPlayerExtendingHand } from "./PlayerMover.js";
+import { IsRightPressedDown, UpdateInput } from "./InputChecker.js";
+import { TryPlayerExtendHandHappy, TryPlayerExtendHandSad, SleepPlayer, NowPlayer, PlayerState } from "./PlayerMover.js";
+import { CancellationToken } from "./CancellationToken.js";
 
 let passedSecondsAfterSpawnPreviousCredits;
 export let Score = 0;
 let nextGetScore = 0;
 export let IsHitStoping = false;
 let getCreditResultInthisFrame = GetCreditResult.Stay;
+let playerBackToSleepTask = null;
 
 export function InitGameManager(){
     passedSecondsAfterSpawnPreviousCredits = 0;
@@ -20,7 +22,7 @@ export function InitGameManager(){
     IsHitStoping = false;
 }
 
-export function Update(deltaSeconds, CreditsList){
+export function Update(deltaSeconds, CreditsList, resultRecorder){
     // 前回単位を生成してから経過した時間を計算
     passedSecondsAfterSpawnPreviousCredits += deltaSeconds;
     // タイミングが良ければ単位を生成
@@ -35,22 +37,37 @@ export function Update(deltaSeconds, CreditsList){
 
     // いずれかの単位が落下中なら
     for (let i=0; i<CreditsList.length; i++){
-        if(CreditsList[i].State == CreditState.FailAndFalling && CreditsList[i].y >= GameConst.WindowSize.y){
+        if(CreditsList[i].State == CreditState.FailAndFalling && CreditsList[i].Position.y >= GameConst.WindowSize.y){
             CreditsList[i].State = CreditState.End;
+            break;
+        }else if(CreditsList[i].State == CreditState.FailAndFalling){
+            let isNowExtendHand = TryPlayerExtendHandSad(IsRightPressedDown);
+            if(isNowExtendHand == true){
+                playerBackToSleepTask = new CancellationToken();
+                DelaySeconds(0.5, playerBackToSleepTask).then(function(){ SleepPlayer(); playerBackToSleepTask = null; });
+            }
             break;
         }
         else if(CreditsList[i].State == CreditState.Falling){
             if(CreditsList[i].Position.y >= GameConst.BottomCatchableArea){
                 CreditsList[i].State = CreditState.FailAndFalling;
                 getCreditResultInthisFrame = GetCreditResult.Fail;
+                // 結果の記録
+                resultRecorder.FailCredits.push(CreditsList[i].Name);
+                resultRecorder.Score = Score;
                 break;
             }else{
                 // 入力を動きに反映する。このフレームで手を伸ばしたのならisNowExtendHandにtrueが入り、以前のフレームですでに伸ばしていたり、今伸ばしていないのならfalseが入る
-                let isNowExtendHand = TryPlayerExtendHand(IsRightPressedDown);
+                let isNowExtendHand = TryPlayerExtendHandHappy(IsRightPressedDown);
 
                 // 手を伸ばした瞬間にスコアの上昇量が決定（実際にはキャッチした瞬間に足す）
                 if(isNowExtendHand == true){
                     nextGetScore = CalculateScore(CreditsList[i]);
+                    // 今悲しい顔をしていたら、一定時間後に悲しい顔から睡眠へもどるという機能をキャンセルする
+                    if(playerBackToSleepTask != null){
+                        playerBackToSleepTask.cancel();
+                        playerBackToSleepTask = null;
+                    }
                 }
                 break;
             }
@@ -62,13 +79,13 @@ export function Update(deltaSeconds, CreditsList){
     // 単位がキャッチできる位置に来ているか調べる
     let CatchableCredit = CheckAbleToCatch(CreditsList);
     if(CatchableCredit != null){
-        CatchCredit(CatchableCredit);
+        CatchCredit(CatchableCredit, resultRecorder);
     }
 }
 
 function CheckAbleToCatch(CreditsList){
     // 主人公が手を伸ばしていない状況ならキャッチできるわけがないのでここでチェック終了
-    if (IsPlayerExtendingHand == false){
+    if ( NowPlayer == PlayerState.Sleeping ){
         return null;
     }
 
@@ -95,6 +112,7 @@ function CalculateScore(Credit){
         calculateResult = 0;
     }
 
+    calculateResult *= 100;
     // 単位取得ポイントをのせて最終スコアとする
     return calculateResult += GameConst.GetCreditPoint;
 }
@@ -115,11 +133,15 @@ export function DebugScoreGet(){
     return Score;
 }
 
-async function CatchCredit(credit) {
+async function CatchCredit(credit, resultRecorder) {
     // 単位をキャッチされている状態にする
     Score += nextGetScore;
     credit.State = CreditState.CaughtByPlayer;
     getCreditResultInthisFrame = GetCreditResult.Get;
+
+    // 結果の記録
+    resultRecorder.GetCredits.push(credit.Name);
+    resultRecorder.Score = Score;
 
     // この操作はキャンセルされないという意思
     let cancellationToken = null;
@@ -157,6 +179,16 @@ export function CheckGetCreditResult(){
     
     // getCreditResultInThisFrame == GetCreditResult.Stay
     return {result: GetCreditResult.Stay, score: 0};
+}
+
+// ゲームが終わったかどうかを判定する
+export function CheckEndGame(CreditsList){
+    for(let i=0; i<CreditsList.length; i++){
+        if(CreditsList[i].State != CreditState.End){
+            return false;
+        }
+    }
+    return true;
 }
 
 export function DebugTimeUntilReachLineGet(CreditsList){

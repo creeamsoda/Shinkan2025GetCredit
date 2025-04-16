@@ -15,3 +15,15 @@ export class Ui{
         this.Font = Font;
     }
 }
+
+export class UiSquare{
+    Position;
+    Color;
+    Size;
+
+    constructor(Position, Color, Size){
+        this.Position = Position;
+        this.Color = Color;
+        this.Size = Size;
+    }
+}
