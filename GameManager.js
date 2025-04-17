@@ -68,6 +68,8 @@ export function Update(deltaSeconds, CreditsList, resultRecorder){
                 getCreditResultInthisFrame = GetCreditResult.Fail;
                 // 結果の記録
                 resultRecorder.FailCredits.push(CreditsList[i].Name);
+                nextGetScore += GameConst.FailCreditPoint;
+                Score += nextGetScore;
                 resultRecorder.Score = Score;
                 break;
             }else{

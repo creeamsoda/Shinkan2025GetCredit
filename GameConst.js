@@ -23,7 +23,10 @@ export const SpawnCreditsSpan = 2;
 export const UpperCatchableArea = 500;
 export const BottomCatchableArea = 600;
 
-export const GetCreditPoint = 1;
+// 単位を取得したときにタイミングにかかわらずゲットできるポイント
+export const GetCreditPoint = 10;
+// 単位を落としたときに引かれるポイント
+export const FailCreditPoint = -100;
 
 
 // 教科名を書き換えてみましょう！

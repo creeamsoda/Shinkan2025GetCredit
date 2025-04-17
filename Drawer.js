@@ -54,6 +54,9 @@ export function Draw(Score, NowPlayer, CreditsList) {
     // 教授の身体の描画
     ctx.drawImage(imageProfesserBody,0,0);
 
+    // 判定の線の描画
+    DrawCatchableArea();
+
     // 単位の描画
     DrawCredits(CreditsList);
     //Debug.DrawCreditSize(ctx);
@@ -71,6 +74,16 @@ export function DebugDraw(Score){
     Debug.DrawScore(ctx, Score);
     //Debug.DrawTimeUntilReachLine(ctx, TimeUntilReachLine);
     Debug.DrawResultText();
+}
+
+function DrawCatchableArea(){
+    ctx.moveTo(UiConst.CatchableAreaLineBegin, GameConst.BottomCatchableArea);
+    ctx.lineTo(UiConst.CatchableAreaLineEnd, GameConst.BottomCatchableArea);
+    ctx.strokeStyle = "#F2A81F";
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.strokeStyle = "black"
+    ctx.lineWidth = 1;
 }
 
 function DrawPlayer(NowPlayer) {
