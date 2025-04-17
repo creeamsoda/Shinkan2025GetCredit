@@ -22,6 +22,7 @@ export const SpawnCreditsSpan = 2;
 
 export const UpperCatchableArea = 500;
 export const BottomCatchableArea = 600;
+export const EnableShowCatchableAreaBorder = 450;
 
 // 単位を取得したときにタイミングにかかわらずゲットできるポイント
 export const GetCreditPoint = 10;

@@ -170,6 +170,28 @@ export function CheckGetCreditResult(){
     return {result: GetCreditResult.Stay, score: 0};
 }
 
+
+// 単位が近づいてきたときに判定の線を消すかどうか判定するための関数
+export function CheckFallingCreditsInShowingLinePosition(CreditsList){
+    // プレイヤーがキャッチしている単位があるとき（ヒットストップ中）は他の単位にかかわらず線を表示する
+    if (IsHitStoping == true){
+        return true;
+    }
+
+    // 落下中の単位をチェックする
+    for (let i=0; i<CreditsList.length; i++){
+        if(CreditsList[i].State == CreditState.Falling 
+            && CreditsList[i].Position.y >= GameConst.EnableShowCatchableAreaBorder)
+        {
+            // 中盤からギリギリ下までのエリアを落ちている単位があるときは線を表示しない
+            return false;
+        }
+    }
+
+    // ヒットストップ中でもなく、落下している単位も中盤から終盤のエリアにいなければ線を表示する
+    return true;
+}
+
 // ゲームが終わったかどうかを判定する
 export function CheckEndGame(CreditsList){
     for(let i=0; i<CreditsList.length; i++){

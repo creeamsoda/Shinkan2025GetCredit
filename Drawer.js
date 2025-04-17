@@ -41,7 +41,7 @@ export function InitDrawer() {
 
 
 
-export function Draw(Score, NowPlayer, CreditsList) {
+export function Draw(Score, NowPlayer, CreditsList, enableShowCatchableAreaBorder) {
     // 画面を一旦クリアする
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -54,8 +54,12 @@ export function Draw(Score, NowPlayer, CreditsList) {
     // 教授の身体の描画
     ctx.drawImage(imageProfesserBody,0,0);
 
-    // 判定の線の描画
-    DrawCatchableArea();
+
+    // 単位が近づいてきたときに線を消すためのフラグをチェック
+    if(enableShowCatchableAreaBorder == true){
+        // まだ近づいていなかったり、ヒットストップ中なら判定の線の描画
+        DrawCatchableArea();
+    }
 
     // 単位の描画
     DrawCredits(CreditsList);

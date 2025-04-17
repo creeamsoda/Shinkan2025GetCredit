@@ -2,7 +2,7 @@ import { GetCreditResult } from "./GetCreditResult.js";
 import { InitInputChecker } from "./InputChecker.js";
 import { NowPlayer } from "./PlayerMover.js";
 import { CreditManager } from "./CreditManager.js";
-import { InitGameManager, Update, CheckGetCreditResult, Score, IsHitStoping, CheckEndGame, /*DebugScoreGet,*/ /*DebugTimeUntilReachLineGet*/ } from "./GameManager.js";
+import { InitGameManager, Update, CheckGetCreditResult, Score, IsHitStoping, CheckEndGame, CheckFallingCreditsInShowingLinePosition, /*DebugTimeUntilReachLineGet*/ } from "./GameManager.js";
 import { ResultRecorder } from "./ResultRecorder.js";
 import { InitDrawer, Draw, GenerateDrawGetCreditResultText, GenerateScoreIncreaseText, DebugDraw } from "./Drawer.js";
 import { DrawResultBoard } from "./ResultDrawer.js";
@@ -50,7 +50,7 @@ function GameRoop() {
     }
 
     // 描画
-    Draw(Score, NowPlayer, CreditManager.CreditsList);
+    Draw(Score, NowPlayer, CreditManager.CreditsList, CheckFallingCreditsInShowingLinePosition(CreditManager.CreditsList));
     //DebugDraw(Score);
 
     if(isInResult == false){
