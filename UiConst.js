@@ -22,3 +22,5 @@ export const ResultCreditNameText = new Ui("", null, "black", "50px", DefaultFon
 export const ResultGetCreditText = new Ui("取得した単位 : ", new Vector2(200, 300), "black", "50px", DefaultFont);
 export const ResultFailCreditText = new Ui("落とした単位 : ", new Vector2(200, 450), "black", "50px", DefaultFont);
 export const ResultScoreText = new Ui("スコア : ", new Vector2(300, 650), "black", "70px", DefaultFont);
+export const ResultFullGetCreditText = new Ui("フル単！", new Vector2(700, 250), "red", "50px", DefaultFont);
+export const ResultFullFailCreditText = new Ui("フル落単！", new Vector2(700, 250), "blue", "50px", DefaultFont);

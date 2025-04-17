@@ -64,18 +64,12 @@ export function Draw(Score, NowPlayer, CreditsList) {
 
     // UIの描画
     DrawUi(Score);
-
-    ctx.arc(0, 0, 10, 0, Math.PI * 2);
-    ctx.fillStyle = "#0095DD";
-    ctx.fill();
 }
 
-export function DebugDraw(Score, TimeUntilReachLine){
-    // ctx.drawImage(imagePlayerHappy,0,0);
-
+export function DebugDraw(Score){
     Debug.DrawCatchableArea(ctx);
     Debug.DrawScore(ctx, Score);
-    Debug.DrawTimeUntilReachLine(ctx, TimeUntilReachLine);
+    //Debug.DrawTimeUntilReachLine(ctx, TimeUntilReachLine);
     Debug.DrawResultText();
 }
 

@@ -1,4 +1,3 @@
-// JavaScript source code
 // 主人公の動きを扱うモジュール
 
 export const PlayerState = Object.freeze({

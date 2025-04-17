@@ -1,10 +1,29 @@
-// JavaScript source code
-
 // 入力情報を表す変数
-export let IsRightPressed = false; // 右矢印キーが押されているか
-export let IsRightPressedDown = false; // 右矢印キーが押された瞬間か
+export let IsKeyPressed = false; // 右矢印キーが押されているか
+export let IsKeyPressedDown = false; // 右矢印キーが押された瞬間か
 
-let PreviousFrameIsRightPressed = false; // 前のフレームでIsRightPressedがtrueだったかを記録する
+let PreviousFrameIsKeyPressed = false; // 前のフレームでIsRightPressedがtrueだったかを記録する
+
+
+// ↓↓ キーの入力を受け付ける処理を書いてみましょう
+
+// キーが押されたときに呼び出される関数
+function KeyDownHandler(e) {
+    // 押されたキーがスペースキーのとき
+    if (e.key == " ") {
+        IsKeyPressed = true;
+    }
+}
+
+// キーが押され終わったときに呼び出される関数
+function KeyUpHandler(e) {
+    if (e.key == " ") {
+        IsKeyPressed = false;
+    }
+}
+
+// ↑↑ キーの入力を受け付ける処理を書いてみましょう
+
 
 
 // ゲームの初期化時に呼び出される関数
@@ -17,36 +36,16 @@ export function InitInputChecker() {
     document.addEventListener("keyup", KeyUpHandler, false);
 }
 
-// キーが押されたときに呼び出される関数
-function KeyDownHandler(e) {
-    // 押されたキーがスペースキーのとき
-    if (e.key == " ") {
-        IsRightPressed = true;
-    }
-    //else if (e.key == "Left" || e.key == "ArrowLeft") {
-    //    leftPressed = true;
-    //}
-}
-
-// キーが押され終わったときに呼び出される関数
-function KeyUpHandler(e) {
-    if (e.key == " ") {
-        IsRightPressed = false;
-    }
-    //else if (e.key == "Left" || e.key == "ArrowLeft") {
-    //    leftPressed = false;
-    //}
-}
 
 // キーの入力情報を更新する関数
 export function UpdateInput(){
     // 前のフレームにIsRightPressdがfalseだったら今のフレームで初めてIsRightPressedDownがtrueになったのでtrueにする
-    if(IsRightPressed == true && PreviousFrameIsRightPressed == false){
-        IsRightPressedDown = true;
+    if(IsKeyPressed == true && PreviousFrameIsKeyPressed == false){
+        IsKeyPressedDown = true;
     }else{
-        IsRightPressedDown = false;
+        IsKeyPressedDown = false;
     }
 
     // このフレームでののIsRightPressedを次フレームに向けて保存しておく
-    PreviousFrameIsRightPressed = IsRightPressed;
+    PreviousFrameIsKeyPressed = IsKeyPressed;
 }

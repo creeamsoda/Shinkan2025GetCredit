@@ -4,12 +4,14 @@ import * as GameConst from "./GameConst.js";
 import { DelaySeconds } from "./Common.js";
 import { CreditState } from "./CreditState.js"
 import { GetCreditResult } from "./GetCreditResult.js";
-import { SpawnNextCredits } from "./ProfesserManager.js";
-import { IsRightPressedDown, UpdateInput } from "./InputChecker.js";
+import { SpawnNextCredits } from "./CreditsSpawner.js";
+import { IsKeyPressedDown, UpdateInput } from "./InputChecker.js";
 import { TryPlayerExtendHandHappy, TryPlayerExtendHandSad, SleepPlayer, NowPlayer, PlayerState } from "./PlayerMover.js";
+import { CalculateScore } from "./CalculateScore.js";
 import { CancellationToken } from "./CancellationToken.js";
 
 let passedSecondsAfterSpawnPreviousCredits;
+let nextSpawnCreditsSpan;
 export let Score = 0;
 let nextGetScore = 0;
 export let IsHitStoping = false;
@@ -18,19 +20,31 @@ let playerBackToSleepTask = null;
 
 export function InitGameManager(){
     passedSecondsAfterSpawnPreviousCredits = 0;
+    nextSpawnCreditsSpan = GameConst.SpawnCreditsSpan;
     Score = 0;
     IsHitStoping = false;
 }
 
+
+// 毎フレーム呼び出される関数。
 export function Update(deltaSeconds, CreditsList, resultRecorder){
+
+    // ↓↓ (発展)単位を落とす間隔をランダムにしてみよう
+
     // 前回単位を生成してから経過した時間を計算
     passedSecondsAfterSpawnPreviousCredits += deltaSeconds;
-    // タイミングが良ければ単位を生成
-    if (passedSecondsAfterSpawnPreviousCredits > GameConst.SpawnCreditsSpan){
-        SpawnNextCredits(CreditsList);
+    // 前回生成からnextSpawnCreditSpan秒が経過していたら単位を生成
+    if (passedSecondsAfterSpawnPreviousCredits > nextSpawnCreditsSpan){
+        // 単位の生成、第二引数（カッコの中の2番目の数）は教授が単位を手に掴んでいる時間
+        SpawnNextCredits(CreditsList, 1);
+
         // 単位を生成してからの経過時間をリセット
         passedSecondsAfterSpawnPreviousCredits = 0;
+        // 次回の単位の生成が何秒後かをここで決めている
+        nextSpawnCreditsSpan = GameConst.SpawnCreditsSpan;
     }
+
+    // ↑↑ (発展)単位を落とす間隔をランダムにしてみよう
 
     // ボタン入力チェック
     UpdateInput();
@@ -41,7 +55,7 @@ export function Update(deltaSeconds, CreditsList, resultRecorder){
             CreditsList[i].State = CreditState.End;
             break;
         }else if(CreditsList[i].State == CreditState.FailAndFalling){
-            let isNowExtendHand = TryPlayerExtendHandSad(IsRightPressedDown);
+            let isNowExtendHand = TryPlayerExtendHandSad(IsKeyPressedDown);
             if(isNowExtendHand == true){
                 playerBackToSleepTask = new CancellationToken();
                 DelaySeconds(0.5, playerBackToSleepTask).then(function(){ SleepPlayer(); playerBackToSleepTask = null; });
@@ -58,7 +72,7 @@ export function Update(deltaSeconds, CreditsList, resultRecorder){
                 break;
             }else{
                 // 入力を動きに反映する。このフレームで手を伸ばしたのならisNowExtendHandにtrueが入り、以前のフレームですでに伸ばしていたり、今伸ばしていないのならfalseが入る
-                let isNowExtendHand = TryPlayerExtendHandHappy(IsRightPressedDown);
+                let isNowExtendHand = TryPlayerExtendHandHappy(IsKeyPressedDown);
 
                 // 手を伸ばした瞬間にスコアの上昇量が決定（実際にはキャッチした瞬間に足す）
                 if(isNowExtendHand == true){
@@ -102,36 +116,9 @@ function CheckAbleToCatch(CreditsList){
     }
 }
 
-function CalculateScore(Credit){
-    // あと何秒でBottomCatchableAreaに到達していたのかを計算する
-    let timeUntilReachBottom = CalculateTimeUntilReachLine(Credit, GameConst.BottomCatchableArea);
 
-    // 残り秒数をもとにしたスコアの計算式（感覚）
-    let calculateResult = 0.5*Math.exp(-5*timeUntilReachBottom) - 0.3*(timeUntilReachBottom - 4) - 0.9;
-    if (calculateResult < 0){
-        calculateResult = 0;
-    }
 
-    calculateResult *= 100;
-    // 単位取得ポイントをのせて最終スコアとする
-    return calculateResult += GameConst.GetCreditPoint;
-}
 
-// 等加速度運動でLineの位置に到達するまでの時間を求める（初速度の向きと加速度の向きがともに正である必要あり）
-function CalculateTimeUntilReachLine(Credit, Line){
-    // 現在地からLineまでの距離
-    let distanceFromLine = Line - Credit.Position.y;
-    // 速度を加速度で割った値、計算中に何度か出てきたので変数にしておく
-    let veloDivineAccel = Credit.Velocity.y / GameConst.GravityAcceleration.y;
-    
-    // 解の公式を変形して所要時間を求める
-    return ( - veloDivineAccel
-        + Math.sqrt(veloDivineAccel*veloDivineAccel + 2*distanceFromLine/GameConst.GravityAcceleration.y));
-}
-
-export function DebugScoreGet(){
-    return Score;
-}
 
 async function CatchCredit(credit, resultRecorder) {
     // 単位をキャッチされている状態にする
@@ -191,15 +178,19 @@ export function CheckEndGame(CreditsList){
     return true;
 }
 
-export function DebugTimeUntilReachLineGet(CreditsList){
-    for (let i=0; i<CreditsList.length; i++){
-        if(CreditsList[i].State == CreditState.CaughtByPlayer){
-            return CalculateTimeUntilReachLine(CreditsList[i], GameConst.BottomCatchableArea);
-        }
-        // 落下中の単位のうち、一番インデックス（iの値）が小さいものについて残り時間を計算
-        if(CreditsList[i].State == CreditState.Falling && CreditsList[i].Position.y <= GameConst.BottomCatchableArea){
-            return CalculateTimeUntilReachLine(CreditsList[i], GameConst.BottomCatchableArea);
-        }
-    }
-    return 0;
-}
+
+// ↓↓ デバッグに使っていたものです。今はもう動かないかも？
+// import { CalculateTimeUntilReachLine } from "./CalculateScore.js";
+
+// export function DebugTimeUntilReachLineGet(CreditsList){
+//     for (let i=0; i<CreditsList.length; i++){
+//         if(CreditsList[i].State == CreditState.CaughtByPlayer){
+//             return CalculateTimeUntilReachLine(CreditsList[i], GameConst.BottomCatchableArea);
+//         }
+//         // 落下中の単位のうち、一番インデックス（iの値）が小さいものについて残り時間を計算
+//         if(CreditsList[i].State == CreditState.Falling && CreditsList[i].Position.y <= GameConst.BottomCatchableArea){
+//             return CalculateTimeUntilReachLine(CreditsList[i], GameConst.BottomCatchableArea);
+//         }
+//     }
+//     return 0;
+// }

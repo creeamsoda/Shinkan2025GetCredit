@@ -26,6 +26,14 @@ export function DrawResultBoard(resultRecorder){
     for (let i=0; i<resultRecorder.FailCredits.length; i++){
         FillResultCreditName(resultRecorder.FailCredits[i], UiConst.ResultFailCreditText, OrganizeResultCreditText(i), 0.25);
     }
+
+    if(resultRecorder.FailCredits.length == 0){
+        // 「フル単！」の文字
+        FillUi(UiConst.ResultFullGetCreditText,"");
+    }else if(resultRecorder.GetCredits.length == 0){
+        // 「フル落単！」の文字
+        FillUi(UiConst.ResultFullFailCreditText,"");
+    }
 }
 
 function FillSquare(uiSquare){

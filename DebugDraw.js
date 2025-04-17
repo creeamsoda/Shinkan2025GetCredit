@@ -4,6 +4,9 @@ import { FillUi } from "./Drawer.js";
 import { FillResultCreditName } from "./ResultDrawer.js";
 import { Vector2 } from "./Common.js";
 
+// デバッグ用のいろんな値を画面に出す関数です
+
+
 export function DrawCatchableArea(ctx){
     ctx.beginPath();
     ctx.moveTo(0, GameConst.UpperCatchableArea);
