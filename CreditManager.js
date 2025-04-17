@@ -43,14 +43,6 @@ export class CreditManager{
 
                 // ↓↓ ここから
 
-                // 移動距離 = 速度*時間 + 加速度*0.5*時間*時間
-                this.CreditsList[i].Position = this.CreditsList[i].Position
-                    .add(this.CreditsList[i].Velocity.times(deltaSeconds))
-                    .add(GameConst.GravityAcceleration.times(0.5*deltaSeconds*deltaSeconds));
-                    
-                // 速度 = 速度 + 加速度*時間
-                this.CreditsList[i].Velocity = this.CreditsList[i].Velocity
-                    .add(GameConst.GravityAcceleration.times(deltaSeconds));
 
                 // ↑↑ ここの間に書いていきましょう
             }

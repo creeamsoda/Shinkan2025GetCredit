@@ -1,24 +1,26 @@
 // 入力情報を表す変数
-export let IsKeyPressed = false; // 右矢印キーが押されているか
-export let IsKeyPressedDown = false; // 右矢印キーが押された瞬間か
+export let IsKeyPressed = false; // 指定のキーが押されているかを表す
+export let IsKeyPressedDown = false; // 指定のキーが押された瞬間か（これは自動で更新するので手動で値を変える必要はないです）
 
-let PreviousFrameIsKeyPressed = false; // 前のフレームでIsRightPressedがtrueだったかを記録する
+let PreviousFrameIsKeyPressed = false; // 前のフレームでIsKeyPressedがtrueだったかを記録する
 
 
 // ↓↓ キーの入力を受け付ける処理を書いてみましょう
 
 // キーが押されたときに呼び出される関数
 function KeyDownHandler(e) {
-    // 押されたキーがスペースキーのとき
-    if (e.key == " ") {
-        IsKeyPressed = true;
+    // ↓↓ ここのカッコの中に条件(押されたキーが「自分で決めたキー」と一致しているか)を書きます
+    if ( true ) {
+        // ここに「自分で決めたキー」が押されたときにすることを書きます
+        // このファイルの上の方にいくつか変数がありますね…？
     }
 }
 
 // キーが押され終わったときに呼び出される関数
 function KeyUpHandler(e) {
-    if (e.key == " ") {
-        IsKeyPressed = false;
+    // ↓↓ ここのカッコの中に条件を書きます
+    if ( true ) {
+        //IsKeyPressed = false;
     }
 }
 
