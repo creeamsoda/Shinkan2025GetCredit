@@ -36,12 +36,13 @@ export function Update(deltaSeconds, CreditsList, resultRecorder){
     // 前回生成からnextSpawnCreditSpan秒が経過していたら単位を生成
     if (passedSecondsAfterSpawnPreviousCredits > nextSpawnCreditsSpan){
         // 単位の生成、第二引数（カッコの中の2番目の数）は教授が単位を手に掴んでいる時間
-        SpawnNextCredits(CreditsList, 1);
+        SpawnNextCredits(CreditsList, 0.3+2*Math.random());
 
         // 単位を生成してからの経過時間をリセット
         passedSecondsAfterSpawnPreviousCredits = 0;
         // 次回の単位の生成が何秒後かをここで決めている
-        nextSpawnCreditsSpan = GameConst.SpawnCreditsSpan;
+        //nextSpawnCreditsSpan = GameConst.SpawnCreditsSpan;
+        nextSpawnCreditsSpan = 1+2*Math.random();
     }
 
     // ↑↑ (発展)単位を落とす間隔をランダムにしてみよう
